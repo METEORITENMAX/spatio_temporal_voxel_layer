@@ -1,0 +1,72 @@
+voxel_layer_runner:
+  ros__parameters:
+    # Global frame for the costmap
+    global_frame: "map"
+    
+    # Robot base frame
+    robot_base_frame: "base_link"
+    
+    # Update frequency for the costmap (Hz)
+    update_frequency: 5.0
+    
+    # Costmap dimensions
+    width: 10.0           # meters
+    height: 10.0          # meters
+    resolution: 0.05      # meters per cell
+    origin_x: -5.0        # meters
+    origin_y: -5.0        # meters
+    
+    # Update region padding around robot (meters)
+    update_bounds_padding: 5.0
+    
+    # Voxel layer configuration
+    voxel_layer:
+      plugin: "spatio_temporal_voxel_layer::SpatioTemporalVoxelLayer"
+      enabled: true
+      voxel_decay: 15.0              # seconds if linear, e^n if exponential
+      decay_model: 0                  # 0=linear, 1=exponential, -1=persistent
+      voxel_size: 0.05               # meters
+      track_unknown_space: true       # default space is known
+      mark_threshold: 0               # voxel height
+      update_footprint_enabled: true
+      combination_method: 1           # 1=max, 0=override
+      origin_z: 0.0                  # meters
+      publish_voxel_map: true        # publish voxel grid for visualization
+      transform_tolerance: 0.2        # seconds
+      mapping_mode: false             # default off, saves map not for navigation
+      map_save_duration: 60.0        # default 60s, how often to autosave
+      
+      # Observation sources
+      # Note: Using the same topic for both marking and clearing is common for depth cameras.
+      # The marking source identifies obstacles, while the clearing source uses the frustum
+      # to clear space that should be free if an obstacle was previously detected there.
+      observation_sources: rgbd1_mark rgbd1_clear
+      
+      # Marking observation
+      rgbd1_mark:
+        data_type: PointCloud2
+        topic: /camera/depth/points
+        marking: true
+        clearing: false
+        obstacle_range: 3.0            # meters
+        min_obstacle_height: 0.3       # meters
+        max_obstacle_height: 2.0       # meters
+        expected_update_rate: 0.0      # if not updating at this rate, remove from buffer
+        observation_persistence: 0.0   # use all measurements taken during now-value, 0=latest
+        inf_is_valid: false            # for laser scans
+        filter: "passthrough"          # apply "voxel", "passthrough", or no filter
+        voxel_min_points: 0            # minimum points per voxel for voxel filter
+        clear_after_reading: true      # clear the buffer after the layer gets readings
+      
+      # Clearing observation
+      rgbd1_clear:
+        data_type: PointCloud2
+        topic: /camera/depth/points
+        marking: false
+        clearing: true
+        max_z: 7.0                     # meters
+        min_z: 0.1                     # meters
+        vertical_fov_angle: 0.8745     # radians (~50 degrees)
+        horizontal_fov_angle: 1.048    # radians (~60 degrees)
+        decay_acceleration: 5.0        # 1/s^2
+        model_type: 0                  # 0=depth camera, 1=3d lidar like VLP16
