@@ -38,7 +38,8 @@ def generate_launch_description():
             'example',
             'standard_indoor_environment_config.yaml'
         ]),
-        description='Full path to the ROS2 parameters file for costmap configuration'
+        description='Full path to the ROS2 parameters file for costmap configuration. '
+                    'The default uses an example config; provide your own for production use.'
     )
     
     use_sim_time_arg = DeclareLaunchArgument(
@@ -62,9 +63,6 @@ def generate_launch_description():
         parameters=[
             LaunchConfiguration('params_file'),
             {'use_sim_time': LaunchConfiguration('use_sim_time')}
-        ],
-        remappings=[
-            ('voxel_grid', 'voxel_grid'),
         ]
     )
 
