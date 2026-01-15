@@ -28,6 +28,111 @@ Steve spoke at ROSCon 2018 about STVL and his presentation is [linked here](http
 
 [![IMAGE ALT TEXT](https://user-images.githubusercontent.com/14944147/46768837-987c9280-cc9e-11e8-99ea-788d3d590dd8.png)](https://vimeo.com/292699571)
 
+## Quick Start: How to Launch This Plugin
+
+This is a **Nav2 costmap plugin** that integrates into the ROS 2 navigation stack. Here's how to use it:
+
+### Prerequisites
+1. **ROS 2** installed (Humble, Iron, Jazzy, or Rolling)
+2. **Nav2** navigation stack installed: `sudo apt install ros-${ROS_DISTRO}-navigation2`
+3. **Sensor data**: A depth camera (e.g., Intel RealSense) or 3D lidar (e.g., Velodyne) publishing `sensor_msgs/PointCloud2`
+4. **TF frames** properly configured: `map`, `base_link`, and sensor frames
+
+### Step-by-Step Integration
+
+#### 1. Install the Plugin
+
+**From apt (recommended for released distributions):**
+```bash
+sudo apt install ros-${ROS_DISTRO}-spatio-temporal-voxel-layer
+```
+
+**From source:**
+```bash
+cd ~/ros2_ws/src
+git clone https://github.com/SteveMacenski/spatio_temporal_voxel_layer.git
+cd ~/ros2_ws
+rosdep install --from-paths src --ignore-src -r -y
+colcon build --packages-select spatio_temporal_voxel_layer
+```
+
+#### 2. Configure Your Costmap
+
+Add the plugin to your costmap configuration file (e.g., `nav2_params.yaml`):
+
+```yaml
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      plugins: ["static_layer", "obstacle_layer", "stvl_layer"]
+      stvl_layer:
+        plugin: "spatio_temporal_voxel_layer/SpatioTemporalVoxelLayer"
+        enabled: true
+        voxel_decay: 15.0        # seconds for voxel decay
+        voxel_size: 0.05         # meters
+        track_unknown_space: true
+        publish_voxel_map: true
+        observation_sources: rgbd1_mark rgbd1_clear
+        rgbd1_mark:
+          data_type: PointCloud2
+          topic: /camera/depth/points  # YOUR SENSOR TOPIC HERE
+          marking: true
+          clearing: false
+          min_obstacle_height: 0.3
+          max_obstacle_height: 2.0
+        rgbd1_clear:
+          data_type: PointCloud2
+          topic: /camera/depth/points  # YOUR SENSOR TOPIC HERE
+          marking: false
+          clearing: true
+          max_z: 7.0
+          min_z: 0.1
+```
+
+**See the [example directory](./spatio_temporal_voxel_layer/example/) for complete configuration examples.**
+
+#### 3. Launch Your Navigation Stack
+
+The plugin will automatically load when you launch Nav2:
+
+```bash
+ros2 launch nav2_bringup navigation_launch.py params_file:=/path/to/your/nav2_params.yaml
+```
+
+Or use the provided standalone example (for testing):
+
+```bash
+ros2 launch spatio_temporal_voxel_layer standalone_example.launch.py
+```
+
+#### 4. Verify It's Working
+
+Check that the plugin is loaded:
+```bash
+ros2 topic list | grep voxel  # Should see voxel-related topics
+```
+
+Visualize in RViz:
+- Add a `PointCloud2` display subscribed to `/voxel_grid` (if `publish_voxel_map: true`)
+- Add a `Costmap2D` display subscribed to your costmap topic
+
+### Key Parameters to Adjust
+
+- **`voxel_decay`**: How long (seconds) before voxels disappear (5-15s for local, 15-45s for global)
+- **`voxel_size`**: Resolution in meters (typically 0.05)
+- **`topic`**: Your sensor's PointCloud2 topic
+- **`vertical_fov_angle`** / **`horizontal_fov_angle`**: Match your sensor's field of view
+- **`model_type`**: 0 for depth cameras, 1 for 3D lidars
+
+### Troubleshooting
+
+- **Ubuntu 20.04 users**: Set `export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2`
+- **Plugin not loading**: Check that `costmap_plugins.xml` is installed and the plugin name is correct
+- **No voxels appearing**: Verify your sensor topic is publishing and TF frames are connected
+- **Performance issues**: Enable the voxel filter on your observation sources
+
+For more details, see the [Configuration and Running](#configuration-and-running) section below.
+
 ### Cite This Work
 
 You can find this work [here](https://journals.sagepub.com/doi/10.1177/1729881420910530).
@@ -162,9 +267,49 @@ Add this plugin to your costmap params file.
 
 ### Running
 
-`roslaunch [navigation_pkg] move_base.launch`
+#### With Nav2 (Typical Setup)
 
-### Enabing/disabling observation_sources real-time
+Launch your Nav2 navigation stack with your custom parameters file that includes this plugin:
+
+```bash
+ros2 launch nav2_bringup navigation_launch.py params_file:=/path/to/your/nav2_params.yaml
+```
+
+Or if you're using a custom bringup package:
+
+```bash
+ros2 launch your_robot_bringup navigation.launch.py
+```
+
+#### Standalone Testing
+
+For testing or learning purposes, use the provided example launch files:
+
+```bash
+# Standalone example with inline parameters
+ros2 launch spatio_temporal_voxel_layer standalone_example.launch.py
+
+# Example with external config file
+ros2 launch spatio_temporal_voxel_layer example_nav2.launch.py \
+  params_file:=/path/to/your/config.yaml
+```
+
+**Note:** These example launch files are minimal and intended for testing. In production, integrate this plugin into your full Nav2 stack.
+
+#### Verifying the Plugin is Running
+
+Check that topics are being published:
+```bash
+ros2 topic list | grep voxel
+ros2 topic echo /voxel_grid --once  # if publish_voxel_map: true
+```
+
+Check plugin status:
+```bash
+ros2 node info /global_costmap  # or /local_costmap
+```
+
+### Enabling/disabling observation_sources real-time
 
 To enable/disable observation sources use a ros service for each source:
 

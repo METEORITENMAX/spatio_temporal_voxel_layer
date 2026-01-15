@@ -146,6 +146,10 @@ install(DIRECTORY example
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
 install(FILES costmap_plugins.xml
   DESTINATION share/${PROJECT_NAME}
 )
