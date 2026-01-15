@@ -24,6 +24,8 @@ find_package(laser_geometry REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_sensor_msgs REQUIRED)
@@ -65,6 +67,8 @@ set(dependencies
   message_filters
   pcl_conversions
   rclcpp
+  rclcpp_lifecycle
+  nav_msgs
   tf2_ros
   tf2_geometry_msgs
   tf2_sensor_msgs
@@ -113,6 +117,11 @@ target_link_libraries(${library_name}
 
 ament_target_dependencies(${library_name} ${dependencies})
 
+# Add voxel_layer_runner executable
+add_executable(voxel_layer_runner src/voxel_layer_runner.cpp)
+target_link_libraries(voxel_layer_runner ${library_name})
+ament_target_dependencies(voxel_layer_runner ${dependencies})
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
@@ -122,6 +131,10 @@ install(TARGETS ${library_name}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS voxel_layer_runner
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY example
