@@ -16,6 +16,9 @@ voxel_layer_runner:
     origin_x: -5.0        # meters
     origin_y: -5.0        # meters
     
+    # Update region padding around robot (meters)
+    update_bounds_padding: 5.0
+    
     # Voxel layer configuration
     voxel_layer:
       plugin: "spatio_temporal_voxel_layer::SpatioTemporalVoxelLayer"
@@ -34,6 +37,9 @@ voxel_layer_runner:
       map_save_duration: 60.0        # default 60s, how often to autosave
       
       # Observation sources
+      # Note: Using the same topic for both marking and clearing is common for depth cameras.
+      # The marking source identifies obstacles, while the clearing source uses the frustum
+      # to clear space that should be free if an obstacle was previously detected there.
       observation_sources: rgbd1_mark rgbd1_clear
       
       # Marking observation

@@ -71,6 +71,7 @@ public:
     this->declare_parameter("resolution", 0.05);
     this->declare_parameter("origin_x", -5.0);
     this->declare_parameter("origin_y", -5.0);
+    this->declare_parameter("update_bounds_padding", 5.0);
 
     // Get parameters
     std::string global_frame = this->get_parameter("global_frame").as_string();
@@ -115,7 +116,11 @@ public:
       //                 rclcpp::CallbackGroup::SharedPtr callback_group)
       
       // Create a lifecycle node for the plugin
-      auto lifecycle_node = std::make_shared<rclcpp_lifecycle::LifecycleNode>("voxel_layer_lifecycle");
+      lifecycle_node_ = std::make_shared<rclcpp_lifecycle::LifecycleNode>("voxel_layer_lifecycle");
+      
+      // Activate the lifecycle node so the plugin can function properly
+      lifecycle_node_->configure();
+      lifecycle_node_->activate();
       
       // Create callback group
       auto callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -125,7 +130,7 @@ public:
         layered_costmap_.get(),
         "voxel_layer",
         tf_buffer_.get(),
-        lifecycle_node,
+        lifecycle_node_,
         callback_group);
 
       RCLCPP_INFO(this->get_logger(), "SpatioTemporalVoxelLayer initialized successfully!");
@@ -194,10 +199,11 @@ private:
     }
 
     // Update bounds
-    double min_x = robot_x - 5.0;
-    double min_y = robot_y - 5.0;
-    double max_x = robot_x + 5.0;
-    double max_y = robot_y + 5.0;
+    double update_bounds_padding = this->get_parameter("update_bounds_padding").as_double();
+    double min_x = robot_x - update_bounds_padding;
+    double min_y = robot_y - update_bounds_padding;
+    double max_x = robot_x + update_bounds_padding;
+    double max_y = robot_y + update_bounds_padding;
 
     // Update the voxel layer
     voxel_layer_->updateBounds(
@@ -245,6 +251,7 @@ private:
   std::shared_ptr<nav2_costmap_2d::Layer> voxel_layer_;
   std::unique_ptr<pluginlib::ClassLoader<nav2_costmap_2d::Layer>> plugin_loader_;
   std::shared_ptr<nav2_costmap_2d::LayeredCostmap> layered_costmap_;
+  std::shared_ptr<rclcpp_lifecycle::LifecycleNode> lifecycle_node_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_pub_;

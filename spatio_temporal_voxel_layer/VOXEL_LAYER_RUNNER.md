@@ -53,6 +53,7 @@ An example parameter file is provided in `example/voxel_layer_runner_params.yaml
 - `resolution` (double, default: 0.05): Costmap resolution in meters per cell
 - `origin_x` (double, default: -5.0): X-coordinate of costmap origin
 - `origin_y` (double, default: -5.0): Y-coordinate of costmap origin
+- `update_bounds_padding` (double, default: 5.0): Padding in meters around robot position for update region
 
 ### Voxel Layer Parameters
 
