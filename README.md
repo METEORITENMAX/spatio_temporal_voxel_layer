@@ -6,6 +6,14 @@ This package sits on top of [OpenVDB](http://www.openvdb.org/), an open-source C
 
 Leveraging OpenVDB, we have the ability to efficiently maintain a 3 dimensional voxel-representative world space. We wrap this with ROS tools and interfaces to the [navigation stack](http://wiki.ros.org/navigation) to allow for use of this layer in standard ROS configurations. It is certainly possible to utilize this package without ROS/Navigation and I invite other competing methodologies to develop here and create interfaces. 
 
+## Standalone Node
+
+**NEW**: A standalone ROS 2 node (`voxel_layer_runner`) is now available for using the SpatioTemporalVoxelLayer plugin independently of Nav2. See [VOXEL_LAYER_RUNNER.md](spatio_temporal_voxel_layer/VOXEL_LAYER_RUNNER.md) for details.
+
+```bash
+ros2 run spatio_temporal_voxel_layer voxel_layer_runner --ros-args --params-file path/to/params.yaml
+``` 
+
 Sample videos are shown below of a robot using **7 depth cameras** with less than 50% of a core, and another robot using a **VLP-16**.
 
 7 Depth Cameras      |  VLP-16 LIDAR 
